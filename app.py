@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for, flash
+import os
+import uuid
+from flask import Flask, render_template, request, redirect, url_for, flash
 from openai import OpenAI
 from dotenv import load_dotenv
-import os
-import tempfile
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # для flash-сообщений
+app.secret_key = os.urandom(24)
 
 # Загрузка переменных окружения из .env
 load_dotenv()
@@ -18,14 +18,18 @@ client = OpenAI(
     base_url="https://api.proxyapi.ru/openai/v1",
 )
 
+# Папка для аудиофайлов
+audio_dir = os.path.join(app.root_path, "static", "audio")
+os.makedirs(audio_dir, exist_ok=True)
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # Получаем текст из поля формы
+        # Чтение текста из поля или файла
         text = request.form.get('text')
-        # Или пытаемся прочитать загруженный файл
         uploaded_file = request.files.get('file')
         input_text = None
+        
         if uploaded_file and uploaded_file.filename != '':
             try:
                 input_text = uploaded_file.read().decode('utf-8')
@@ -38,25 +42,38 @@ def index():
             flash("Введите текст или загрузите файл с текстом.")
             return redirect(url_for('index'))
         
-        # Генерируем аудио с помощью TTS API
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
-            temp_audio_path = temp_audio.name
+        # Дополнительные параметры
+        model = request.form.get('model') or "tts-1-hd"
+        voice = request.form.get('voice') or "nova"
+        instructions = request.form.get('instructions', '').strip()
+        
+        # Генерация уникального имени файла
+        filename = f"speech_{uuid.uuid4().hex}.mp3"
+        audio_file_path = os.path.join(audio_dir, filename)
+        
+        # Параметры для запроса
+        params = {
+            "model": model,
+            "voice": voice,
+            "input": input_text,
+        }
+        if instructions:
+            params["instructions"] = instructions
         
         try:
-            with client.audio.speech.with_streaming_response.create(
-                model="tts-1-hd",  # Используем модель tts-1-hd
-                voice="nova",      # Голос можно менять: alloy, echo, fable, onyx, nova, shimmer
-                input=input_text,
-            ) as response:
-                response.stream_to_file(temp_audio_path)
+            with client.audio.speech.with_streaming_response.create(**params) as response:
+                response.stream_to_file(audio_file_path)
         except Exception as e:
             flash("Ошибка при генерации аудио: " + str(e))
-            os.remove(temp_audio_path)
+            if os.path.exists(audio_file_path):
+                os.remove(audio_file_path)
             return redirect(url_for('index'))
         
-        # Отправляем сгенерированный файл пользователю
-        return send_file(temp_audio_path, as_attachment=True, download_name="speech.mp3")
+        # Формируем URL для доступа к файлу
+        audio_url = url_for('static', filename=f"audio/{filename}")
+        return render_template("result.html", audio_url=audio_url)
     return render_template("index.html")
 
 if __name__ == '__main__':
+    # Приложение будет доступно по ip:5000 (например, 194.87.130.222:5000)
     app.run(host='0.0.0.0', port=5000)

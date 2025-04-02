@@ -6,3 +6,4 @@ __pycache__/
 instance/
 *.mp3
 *.log
+static/audio/

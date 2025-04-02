@@ -30,10 +30,46 @@
                 <label for="file" class="form-label">Или загрузите файл (.txt)</label>
                 <input class="form-control" type="file" id="file" name="file" accept=".txt">
             </div>
+            <div class="mb-3">
+                <label for="model" class="form-label">Выберите модель</label>
+                <select class="form-select" id="model" name="model">
+                    <option value="tts-1" selected>tts-1 (Базовая модель)</option>
+                    <option value="tts-1-hd">tts-1-hd (Высокое качество)</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="voice" class="form-label">Выберите голос</label>
+                <select class="form-select" id="voice" name="voice">
+                    <option value="alloy">alloy</option>
+                    <option value="echo">echo</option>
+                    <option value="fable">fable</option>
+                    <option value="onyx">onyx</option>
+                    <option value="nova" selected>nova</option>
+                    <option value="shimmer">shimmer</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="instructions" class="form-label">Системный промт (опционально)</label>
+                <textarea class="form-control" id="instructions" name="instructions" rows="2" placeholder="Например: Говори дружелюбно и энергично."></textarea>
+            </div>
             <button type="submit" class="btn btn-primary">Озвучить</button>
         </form>
+        
+        <div class="mt-4">
+            <h5>Различия моделей:</h5>
+            <ul>
+                <li><strong>tts-1</strong>: Базовая модель преобразования текста в речь с быстрой обработкой, подходит для менее требовательных приложений.</li>
+                <li><strong>tts-1-hd</strong>: Модель высокого качества, обеспечивает более естественное звучание, но может быть немного медленнее.</li>
+                <li><strong>whisper-1</strong>: Модель для распознавания речи (speech-to-text), а не для генерации аудио.</li>
+            </ul>
+        </div>
+        
+        <div class="mt-4">
+            <h5>Ограничения по символам:</h5>
+            <p>Рекомендуется не превышать 1000–2000 символов за один запрос. Для больших текстов разбивайте его на части.</p>
+        </div>
     </div>
-    <!-- Bootstrap JS (опционально для интерактивности) -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
